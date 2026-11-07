@@ -1,0 +1,192 @@
+{
+  "info": {
+    "name": "TASKFLOW API",
+    "description": "TASKFLOW Görev Yönetim API'si için Postman koleksiyonu. Önce sunucuyu başlatın (npm start), sonra istekleri sırayla çalıştırın.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:3000" },
+    { "key": "taskId", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "CRUD İşlemleri",
+      "item": [
+        {
+          "name": "1 - Görev Ekle (POST /tasks)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Durum kodu 201', function () { pm.response.to.have.status(201); });",
+                  "const task = pm.response.json();",
+                  "pm.test('Görev id ile oluşturuldu', function () { pm.expect(task).to.have.property('id'); });",
+                  "pm.test('Varsayılan status pending', function () { pm.expect(task.status).to.eql('pending'); });",
+                  "pm.collectionVariables.set('taskId', task.id);"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Login endpoint'ini yaz\",\n  \"description\": \"Kullanıcı giriş akışı için endpoint hazırlanacak\",\n  \"priority\": \"high\",\n  \"assignee\": \"musa\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/tasks", "host": ["{{baseUrl}}"], "path": ["tasks"] }
+          }
+        },
+        {
+          "name": "2 - Görevleri Listele (GET /tasks)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Durum kodu 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Görev listesi dizi olarak geliyor', function () { pm.expect(pm.response.json().tasks).to.be.an('array'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/tasks", "host": ["{{baseUrl}}"], "path": ["tasks"] }
+          }
+        },
+        {
+          "name": "3 - Görev Detayı (GET /tasks/:id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Durum kodu 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Doğru görev geldi', function () { pm.expect(String(pm.response.json().id)).to.eql(String(pm.collectionVariables.get('taskId'))); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}"] }
+          }
+        },
+        {
+          "name": "4 - Görev Güncelle (PUT /tasks/:id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Durum kodu 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Status in-progress oldu', function () { pm.expect(pm.response.json().status).to.eql('in-progress'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in-progress\",\n  \"assignee\": \"ayse\"\n}"
+            },
+            "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}"] }
+          }
+        },
+        {
+          "name": "5 - Görev Sil (DELETE /tasks/:id)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Durum kodu 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Silme mesajı döndü', function () { pm.expect(pm.response.json().message).to.eql('Görev silindi'); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}"] }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Hata Senaryoları",
+      "item": [
+        {
+          "name": "6 - Başlıksız Görev Ekle (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Durum kodu 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": { "mode": "raw", "raw": "{\n  \"description\": \"Başlık yok\"\n}" },
+            "url": { "raw": "{{baseUrl}}/tasks", "host": ["{{baseUrl}}"], "path": ["tasks"] }
+          }
+        },
+        {
+          "name": "7 - Silinen Görevi Getir (404)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Durum kodu 404', function () { pm.response.to.have.status(404); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/tasks/{{taskId}}", "host": ["{{baseUrl}}"], "path": ["tasks", "{{taskId}}"] }
+          }
+        },
+        {
+          "name": "8 - Geçersiz ID (400)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Durum kodu 400', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/tasks/abc", "host": ["{{baseUrl}}"], "path": ["tasks", "abc"] }
+          }
+        }
+      ]
+    }
+  ]
+}
